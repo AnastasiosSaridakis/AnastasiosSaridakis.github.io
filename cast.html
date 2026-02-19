@@ -68,7 +68,12 @@
             <button onclick="onOffer()">Create Answer</button>
 
             <h3>2. Copy Answer to Unity:</h3>
-            <textarea id="remoteAnswer" placeholder="Answer JSON will appear here..."></textarea>
+            <textarea id="remoteAnswer" placeholder="Answer JSON will appear here..." readonly></textarea>
+
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button onclick="clearLogs()" style="background:#eee; color:#333;">Clear Logs</button>
+                <button onclick="window.location.reload()" style="background:#fdd; color:#333;">Full Reset</button>
+            </div>
 
             <h3>Logs:</h3>
             <div id="logs"></div>
@@ -105,7 +110,12 @@
 
                 log("Initializing PeerConnection...");
                 pc = new RTCPeerConnection({
-                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun.services.mozilla.com' }
+                    ]
                 });
 
                 pc.ontrack = event => {
@@ -122,14 +132,15 @@
 
                 pc.onicecandidate = event => {
                     if (event.candidate) {
-                        log("New ICE Candidate generated (see console if needed).");
+                        const type = event.candidate.candidate.split(' ')[7];
+                        log(`New ICE Candidate (${type}): ${event.candidate.candidate.substring(0, 30)}...`);
                     }
                 };
 
                 pc.oniceconnectionstatechange = () => {
                     log(`ICE Connection State: ${pc.iceConnectionState}`);
                     if (pc.iceConnectionState === 'failed') {
-                        log("Connection failed. Ensure both sides are on the same network or have STUN access.");
+                        log("Connection failed. This often happens if both sides are behind strict NATs. Ensure you are copying the strings quickly to avoid timeouts.");
                     }
                 };
 
@@ -162,6 +173,11 @@
                 console.error(e);
                 log(`Error: ${e.message}`);
             }
+        }
+
+        function clearLogs() {
+            logs.innerHTML = '';
+            log("Logs cleared.");
         }
     </script>
 </body>
